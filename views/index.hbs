@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="ftp/css/chart.css" />
+    <link rel="stylesheet" href="ftp/css/bootstrap.min.css">
+    <script src="ftp/js/smoothie.js"></script>
+    <script src="ftp/js/chart-plugin.js"></script>
+    <script src="ftp/js/moment.js"></script>
+    <script src="ftp/js/stream.js"></script>
+    <script src="ftp/js/socket.io.js"></script>
+    <title>CDN - HomePage</title>
+</head>
+<script>
+    function displayLineChartAndInit() {
+        const socket = io('/');
+    socket.on('connect', function() {
+        setInterval(function() {
+            socket.emit('gimme_cpu_usage');
+        },1000)
+        
+    })
+    socket.on('cpu_usage', function(v) {
+        addData(v);
+    })
+    var smoothie = new SmoothieChart({
+  /**grid: { strokeStyle:'rgb(125, 0, 0)', fillStyle:'rgb(60, 0, 0)',
+          lineWidth: 1, millisPerLine: 250, verticalSections: 6, },
+  labels: { fillStyle:'rgb(60, 0, 0)' }**/
+});
+    smoothie.streamTo(document.getElementById("lineChart"), 1000);
+    // Data
+var line1 = new TimeSeries();
+
+function addData(v) {
+            line1.append(new Date().getTime(), v);           
+        }
+
+// Add to SmoothieChart
+smoothie.addTimeSeries(line1, { strokeStyle:'rgb(0, 255, 0)', fillStyle:'rgba(0, 255, 0, 0.4)', lineWidth:3 });
+
+    }
+
+</script>
+<!-- <script language="JavaScript">
+      var data =  { 
+          datasets: [{ label:'CPU Usage', data: [] }]
+          }
+    var options = {
+           /** scales: { xAxes: [{ type: 'time' }] },
+            plugins: {
+            streaming: {
+                onRefresh: function(chart) {
+                chart.data.datasets.forEach(function(dataset) {
+                    dataset.data.push({
+                    x: Date.now(),
+                    y: Math.random()
+                    });
+                });
+                }
+            }
+            } **/
+        }
+   function displayLineChartAndInit() {
+    const socket = io('/');
+    socket.on('connect', function() {
+        setInterval(function() {
+            socket.emit('gimme_cpu_usage');
+        },1000)
+        
+    })
+    socket.on('cpu_usage', function(v) {
+        addData(v);
+    })
+   
+    var ctx = document.getElementById("lineChart").getContext("2d");
+    window.lineChart = new Chart(ctx, {
+        type:'line',
+        data:data,
+        options:options
+    });
+  }
+  function addData(v) {
+            var today = new Date();
+            var h = today.getHours();
+            var m = today.getMinutes();
+            var s = today.getSeconds();
+            data.labels.push(h + ':' + m + ':' + s);
+            data.datasets.forEach((dataset) => {
+                dataset.data.push(v);
+                if(dataset.data.length > 10 && data.labels.length > 10) {
+                    data.labels.shift()
+                    dataset.data.shift();
+                }
+            });
+            window.lineChart.update();
+        }
+        function removeData(chart) {
+            chart.data.labels.pop();
+            chart.data.datasets.forEach((dataset) => {
+                dataset.data.pop();
+            });
+            chart.update();
+        }
+</script> -->
+</head>
+<body onload="displayLineChartAndInit();">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                <a class="navbar-brand" href="#">CDN</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarColor01">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                      <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="/ftp">Browse</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="/upload">Upload</a>
+                    </li>
+                  </ul>
+                  <form method="GET" action="/ftp" class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="text" name="q" placeholder="Search for files and folders">
+                    <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
+                  </form>
+                </div>
+              </nav>
+              <br>
+  <div class="container">
+      <canvas style="border-radius: 5px;" id="lineChart"></canvas><br>
+      Uptime: {{stats.uptime}}<br>
+      Free Memory: {{stats.freemem}}
+  </div>
+</body>
+</html>
